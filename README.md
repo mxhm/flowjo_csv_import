@@ -12,21 +12,26 @@ Name, Attribute1, Attribute2 ...
 ```
 
 After the first column, the attributes can be arbitrarily named and the
-columns names be used as keywords for sample annotation. 
+column names will be used as keywords for sample annotation. 
 This should allow us to add perturbations, subject ids, genotype data etc in a flexible fashion.
 
 Note: Just hit cancel to not load anything.
 
 ## installation
 
-Adjust path for FlowJo to find the JAR file:
+Download the plugin from the git repo and save to your computer, ideally in FlowJo's plugins folder:
+```
+flowjo_csv_import/out/artifacts/flowjo_csv_import_jar/flowjo_csv_import.jar
+```
+
+Adjust path for FlowJo to find the file where you saved it:
 ```
 FlowJo > Preferences > Diagnostics > search path to JAR
 ```
 
 You might have to restart FlowJo now. Then add the plugin:
 ```
-Workspace > Plugins > Add Workspace Plugin > Select "CSVImport"
+Workspace > Plugins > Add Workspace Plugin > Select "CSVImport" and click add
 ```
 
 ## development
