@@ -3,6 +3,8 @@ package com.plugins;
 
 import java.awt.*;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.treestar.lib.core.WorkspacePluginInterface;
 import com.treestar.lib.xml.SElement;
@@ -29,15 +31,15 @@ public class CSVImport implements WorkspacePluginInterface {
         // show annotation import dialog when opening workspace
         showDialog(workspaceElement);
 
-//        // add gui for debug output
-//        JTextArea textArea = new JTextArea(); // Output text area
-//        GuiOutputStream rawout = new GuiOutputStream(textArea);
-//        // Set new stream for System.out
-//        System.setOut(new PrintStream(rawout, true));
-//        JFrame window = new JFrame("Console output");
-//        window.add(new JScrollPane(textArea));
-//        window.setSize(500, 500);
-//        window.setVisible(true);
+        // add gui for debug output
+        JTextArea textArea = new JTextArea(); // Output text area
+        GuiOutputStream rawout = new GuiOutputStream(textArea);
+        // Set new stream for System.out
+        System.setOut(new PrintStream(rawout, true));
+        JFrame window = new JFrame("Console output");
+        window.add(new JScrollPane(textArea));
+        window.setSize(500, 500);
+        window.setVisible(true);
 
         return true;
     }
@@ -75,7 +77,7 @@ public class CSVImport implements WorkspacePluginInterface {
                 annotateFromCSV(workspaceElement, filepath);
             } catch (Exception ex) {
                 // TODO not doing anything
-                System.out.println("Exception reading csv file (1)");
+                System.out.println("Exception opening csv file");
                 System.out.println(ex);
             }
 
@@ -85,11 +87,16 @@ public class CSVImport implements WorkspacePluginInterface {
 
     private void annotateFromCSV(SElement workspaceElement, String csvPath) {
 
+        // build an index of sample nodes that can be annotated later
+        SElement sampleList = workspaceElement.getChild("SampleList");
+        Map<String, SElement> sampleMap = new HashMap<String, SElement>();
+        for (SElement sample : sampleList.getChildren()) {
+            //sample.getChild("SampleNode").getAttribute("name");
+            sampleMap.put(sample.getChild("SampleNode").getAttribute("name"), sample);
+        }
+
         try {
-
-            SElement sampleList = workspaceElement.getChild("SampleList");
             CSVReader reader = new CSVReader(new FileReader(csvPath));
-
             String[] nextLine;
             String[] header = new String[0];
             int lineNumber = 0;
@@ -100,22 +107,33 @@ public class CSVImport implements WorkspacePluginInterface {
                 }
                 lineNumber++;
 
-                for (SElement sample : sampleList.getChildren()) {
-                    // TODO #1 should build an index of SampleNodes once and then add to the correct node in linear time
-                    //  not a problem right now, but will be if we iterate over thousands of samples.
-                    if (sample.getChild("SampleNode").getAttribute("name").equals(nextLine[0])) {
-                        for (int i = 1; i < header.length; i++) {
-                            SElement keywordsNode = sample.getChild("Keywords");
-                            SElement keyword = new SElement("Keyword");
-                            keyword.setString("name", header[i]);
-                            keyword.setString("value", nextLine[i]);
-                            keywordsNode.addContent(keyword);
-                        }
+                if (sampleMap.containsKey(nextLine[0])){
+                    SElement sample = sampleMap.get(nextLine[0]);
+                    for (int i = 1; i < header.length; i++) {
+                        SElement keywordsNode = sample.getChild("Keywords");
+                        SElement keyword = new SElement("Keyword");
+                        keyword.setString("name", header[i]);
+                        keyword.setString("value", nextLine[i]);
+                        keywordsNode.addContent(keyword);
                     }
                 }
+
+//                for (SElement sample : sampleList.getChildren()) {
+//                    // TODO #1 should build an index of SampleNodes once and then add to the correct node in linear time
+//                    //  not a problem right now, but will be if we iterate over thousands of samples.
+//                    if (sample.getChild("SampleNode").getAttribute("name").equals(nextLine[0])) {
+//                        for (int i = 1; i < header.length; i++) {
+//                            SElement keywordsNode = sample.getChild("Keywords");
+//                            SElement keyword = new SElement("Keyword");
+//                            keyword.setString("name", header[i]);
+//                            keyword.setString("value", nextLine[i]);
+//                            keywordsNode.addContent(keyword);
+//                        }
+//                    }
+//                }
             }
         } catch (Exception e) {
-            System.out.println("Exception reading csv file (2)");
+            System.out.println("Exception parsing csv and annotating workspace.");
             System.out.println(e);
         }
         // for debugging
